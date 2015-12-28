@@ -1,84 +1,81 @@
+var POLLING_INTERVAL = 3500, // Milliseconds
+    VICINITY_STRENGTH = -8, // B/T RSSI
+    BUTTON_HOLD_TIME = 2000, // Milliseconds
+    DISCONNECTION_DURATION = 24500, // Milliseconds
+    CONF_FILE = 'BLUETOOTH-HW.CONF';
+
 var exec = require('child_process').exec,
-    GPIO = require('rpi').GPIO,
-    pin = [];
+    fs = require("fs"),
+    GPIO = require('rpi').GPIO;
 
- // Pin 0, used when device comes closer
- pin[0] = new GPIO(0, 'out');
+var mac = fs.readFileSync(CONF_FILE);
 
- // Pin 7, used when device leaves vicinity
- pin[7] = new GPIO(7, 'out');
+var unlockPin = new GPIO(0, 'out'),
+    lockPin = new GPIO(7, 'out');
 
- // MAC Address of Device
- var mac = "78:47:1D:2C:89:69";
+var changeButton = new GPIO(8, 'in');
 
- // Detection Command
- var cmd = "hcitool cc " + mac + " && hcitool rssi " + mac;
+var connectionStatus = false,
+    lastConnectionTime = 0;
 
- // Keep track of variables
- var count = 0,
-     ncount = 0,
-     connected = false;
+var disconnectionCount = 0;
 
- // Check status every 50ms
- setInterval(function () {
-     exec(cmd, function (error, stdout, stderr) {
-         //*
-             console.log("---");
-             console.log(stdout);
-             console.log(Math.round(stdout.split(": ")[1]));
-             console.log(count);
-             console.log(ncount);
-             console.log(connected);
-         //*/
+changeButton.on('change', function(value) {
+    if (value == 1) {
+        exec("hcitool scan", function(error, stdout, stderr) {
+            mac = stdout.split("\n")[1].split("\t")[1];
+            //
+            // check mac, err. check with values
+            // take first dev.
+            //
+            fs.writeFileSync(CONF_FILE, mac);
+        });
+    }
+});
 
-         // If signal is stronger than -8, treat it as the phone is in valid rannge
-         if(Math.round(stdout.split(": ")[1]) > -8) {
-             // Increment count so that continous detections may be logged
-             count++;
-             
-             // If not already connected
-             if(connected == false) {
-                 // phone is in vicinity for at least 7 detections
-                 if(count >= 7) {
-                     // console.log("match");
-                     // turn first pin on, unlock car
-                     pin[0].high();
-                     // turn pin off after two seconds
-                     setTimeout(function () {
-                         pin[0].low()
-                     }, 2000);
-                     // set status to connected
-                     connected = true;
-                 }
-             }
-             
-             // Reset count for lack of connections
-             ncount = 0;
-         } 
-         // If the signal is weaker than that, treat it as though the phone is not in valid range
-         else if((!stdout || Math.round(stdout.split(
-                 ": ")[1]) < -8)) {
-             // Increment count for disconnections/lack of connections     
-             ncount++;
-             
-             // If already connected
-             if(connected == true) {
-                 // Wait for 30 connection failures until car locks
-                 if(ncount >= 30) {
-                     // console.log("nmatch");
-                     // turn second pin on, lock car
-                     pin[7].high();
-                     // turn pin off after two seconds
-                     setTimeout(function () {
-                         pin[7].low();
-                     }, 2000);
-                     // set status to disconnected
-                     connected = false;
-                 }
-             }
-             
-             // Reset count for connections
-             count = 0;
-         }
-     });
- }, 50);
+function switchPower(pin) {
+    pin.high();
+    setTimeout(function() {
+        pin.low();
+    }, BUTTON_HOLD_TIME);
+}
+
+function cmd() {
+    return "hcitool cc " + mac + " && hcitool rssi " + mac;
+}
+
+function parseConnectionStrength(resp) {
+    if (resp != "" && resp.split(": ")[1] != "") {
+        // Math.round is applied to convert string to number, returns RSSI from command
+        return Math.round(resp.split(": ")[1]);
+    } else {
+        // Device is not is range
+        return -2056;
+    }
+}
+
+// Probe for Device Presence
+setInterval(function() {
+    if (mac.length == 17) {
+        exec(cmd(), function(error, stdout, stderr) {
+            var connectionStrength = parseConnectionStrength(stdout);
+
+            // Check if phone is in valid range
+            if ((connected == false) && (connectionStrength > VICINITY_STRENGTH)) {
+                switchPower(unlockPin);
+                connected = true;
+                lastConnectionTime = Date.now();
+                disconnectionCount = 0;
+            }
+            // If the signal is weaker than that, treat it as though the phone is not in valid range
+            else if ((connected == true) && ((!stdout) || (connectionStrength < VICINITY_STRENGTH))) {
+                disconnectionCount++;
+                // Calculate approx. how many times hardware should be probed before disconnect is acknowledged
+                if (disconnectionCount >= Math.ceil(DISCONNECTION_DURATION / POLLING_INTERVAL)) {
+                    switchPower(lockPin);
+                    connected = false;
+                }
+            }
+        });
+    }
+}, POLLING_INTERVAL);
