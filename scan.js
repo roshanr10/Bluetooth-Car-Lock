@@ -45,12 +45,11 @@ function cmd() {
 }
 
 function parseConnectionStrength(resp) {
-    if (resp != "" && resp.split(": ")[1] != "") {
-        // Math.round is applied to convert string to number, returns RSSI from command
-        return Math.round(resp.split(": ")[1]);
+    var rawRSSI = resp.split(": ")[1];
+    if (rawRSSI != "") {
+        return Math.round(rawRSSI); // Math.round is applied to convert string to number, returns RSSI from command
     } else {
-        // Device is not is range
-        return -2056;
+        return -2056;               // Device is not is range
     }
 }
 
@@ -68,7 +67,7 @@ setInterval(function() {
                 disconnectionCount = 0;
             }
             // If the signal is weaker than that, treat it as though the phone is not in valid range
-            else if ((connected == true) && ((!stdout) || (connectionStrength < VICINITY_STRENGTH))) {
+            else if ((connected == true) && (connectionStrength < VICINITY_STRENGTH)) {
                 disconnectionCount++;
                 // Calculate approx. how many times hardware should be probed before disconnect is acknowledged
                 if (disconnectionCount >= Math.ceil(DISCONNECTION_DURATION / POLLING_INTERVAL)) {
