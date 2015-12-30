@@ -73,7 +73,9 @@ setInterval(function() {
         console.log(" - " + Date.now());
         if (mac.length == 17) {
             console.log(" - Valid MAC Address was found in Config, detecting signal strength.");
-            var stdout = execSync(cmd());
+            var stdout = execSync(cmd(),{
+                encoding: 'utf8'
+            });
             console.log("Stdout: "+stdout);
             var connectionStrength = parseConnectionStrength(stdout);
             console.log(connectionStrength);
