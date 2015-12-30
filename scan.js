@@ -4,7 +4,7 @@ var POLLING_INTERVAL = 3500, // Milliseconds
     DISCONNECTION_DURATION = 24500, // Milliseconds
     CONF_FILE = 'BLUETOOTH-HW.CONF';
 
-var exec = require('child_process').exec,
+var execSync = require('child_process').execSync,
     fs = require("fs"),
     GPIO = require('rpi').GPIO;
 
