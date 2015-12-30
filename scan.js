@@ -59,7 +59,7 @@ function parseConnectionStrength(resp) {
     
     if (rawRSSI != "") {
         return Math.round(rawRSSI); // Math.round is applied to convert string to number, returns RSSI from command
-    } else {
+    } else {    
         return -2056;               // Device is not is range, return number that is guaranteed to far out of the RSSI range
     }
 }
@@ -79,7 +79,6 @@ setInterval(function() {
             var connectionStrength = -2056;
         }
         console.log("Stdout: "+stdout);
-        var connectionStrength = parseConnectionStrength(stdout);
         console.log(connectionStrength);
         console.log(inRange);
         console.log(VICINITY_STRENGTH);
