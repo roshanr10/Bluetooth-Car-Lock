@@ -68,6 +68,7 @@ function parseConnectionStrength(resp) {
 
 // Probe for Device Presence
 setInterval(function() {
+    try {
     console.log("Probing for Connection...");
     console.log(" - " + Date.now());
     if (mac.length == 17) {
@@ -101,6 +102,9 @@ setInterval(function() {
                 inRange = false;
             }
         }
+    }
+    catch(e){
+        console.log(e);
     }
     console.log("--------------");
 }, POLLING_INTERVAL);
