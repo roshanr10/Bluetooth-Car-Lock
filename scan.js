@@ -20,7 +20,7 @@ var inRange = false,
 
 var disconnectionCount = 0;
 
-changeButton.on('change', function(value) {
+/*changeButton.on('change', function(value) {
     if (value == 1) {
         console.log("Request to Change Bluetooth Device Received.");
         exec("hcitool scan", function(error, stdout, stderr) {
@@ -40,7 +40,7 @@ changeButton.on('change', function(value) {
             }
         });
     }
-});
+});*/
 
 function switchPower(pin) {
     pin.high();
@@ -58,8 +58,10 @@ function parseConnectionStrength(resp) {
     console.log("    - raw RSSI: " + rawRSSI);
     
     if (rawRSSI != "") {
+        console.log(Math.round(rawRSSI));
         return Math.round(rawRSSI); // Math.round is applied to convert string to number, returns RSSI from command
     } else {
+        console.log(-2056);
         return -2056;               // Device is not is range, return number that is guaranteed to far out of the RSSI range
     }
 }
@@ -70,35 +72,35 @@ setInterval(function() {
     console.log(" - " + Date.now());
     if (mac.length == 17) {
         console.log(" - Valid MAC Address was found in Config, detecting signal strength.");
-        exec(cmd(), function(error, stdout, stderr) {
-            //console.log(stdout);
-            
-            var connectionStrength = parseConnectionStrength(stdout);
-
-            // Check if phone is in valid range
-            if ((inRange == false) && (connectionStrength > VICINITY_STRENGTH)) {
-                console.log(" - Phone is in the disconnected state and device is within preconfigured vicinity.");
-                console.log("    - Unlocking Car");
-                switchPower(unlockPin);
-                console.log("    - Reconfiguring Variables");
-                inRange = true;
-                lastConnectionTime = Date.now();
-                disconnectionCount = 0;
-                console.log("       - Connection Time: " + lastConnectionTime);   
+        var stdout = execSync(cmd());
+        console.log("Stdout: "+stdout);
+        var connectionStrength = parseConnectionStrength(stdout);
+        console.log(connectionStrength);
+        console.log(inRange);
+        console.log(VICINITY_STRENGTH);
+        // Check if phone is in valid range
+        if ((inRange == false) && (connectionStrength > VICINITY_STRENGTH)) {
+            console.log(" - Phone is in the disconnected state and device is within preconfigured vicinity.");
+            console.log("    - Unlocking Car");
+            switchPower(unlockPin);
+            console.log("    - Reconfiguring Variables");
+            inRange = true;
+            lastConnectionTime = Date.now();
+            disconnectionCount = 0;
+            console.log("       - Connection Time: " + lastConnectionTime);   
+        }
+        // If the signal is weaker than that, treat it as though the phone is not in valid range
+        else if ((inRange == true) && (connectionStrength < VICINITY_STRENGTH)) {
+            console.log(" - Phone is in the connected state and device is not within preconfigured vicinity.");
+            disconnectionCount++;
+            console.log("    - Increment Disconnection Count: " + disconnectionCount);
+            // Calculate approx. how many times hardware should be probed before disconnect is acknowledged
+            if (disconnectionCount >= Math.ceil(DISCONNECTION_DURATION / POLLING_INTERVAL)) {
+                console.log("    - Locking Car");
+                switchPower(lockPin);
+                inRange = false;
             }
-            // If the signal is weaker than that, treat it as though the phone is not in valid range
-            else if ((inRange == true) && (connectionStrength < VICINITY_STRENGTH)) {
-                console.log(" - Phone is in the connected state and device is not within preconfigured vicinity.");
-                disconnectionCount++;
-                console.log("    - Increment Disconnection Count: " + disconnectionCount);
-                // Calculate approx. how many times hardware should be probed before disconnect is acknowledged
-                if (disconnectionCount >= Math.ceil(DISCONNECTION_DURATION / POLLING_INTERVAL)) {
-                    console.log("    - Locking Car");
-                    switchPower(lockPin);
-                    inRange = false;
-                }
-            }
-        });
+        }
     }
     console.log("--------------");
 }, POLLING_INTERVAL);
