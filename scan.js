@@ -78,10 +78,6 @@ setInterval(function() {
         } catch(e){
             var connectionStrength = -2056;
         }
-        console.log("Stdout: "+stdout);
-        console.log(connectionStrength);
-        console.log(inRange);
-        console.log(VICINITY_STRENGTH);
         // Check if phone is in valid range
         if ((inRange == false) && (connectionStrength > VICINITY_STRENGTH)) {
             console.log(" - Phone is in the disconnected state and device is within preconfigured vicinity.");
@@ -92,6 +88,8 @@ setInterval(function() {
             lastConnectionTime = Date.now();
             disconnectionCount = 0;
             console.log("       - Connection Time: " + lastConnectionTime);   
+        } else if (connectionStrength > VICINITY_STRENGTH) {
+            disconnectionCount = 0;
         }
         // If the signal is weaker than that, treat it as though the phone is not in valid range
         else if ((inRange == true) && (connectionStrength < VICINITY_STRENGTH)) {
