@@ -69,37 +69,38 @@ function parseConnectionStrength(resp) {
 // Probe for Device Presence
 setInterval(function() {
     try {
-    console.log("Probing for Connection...");
-    console.log(" - " + Date.now());
-    if (mac.length == 17) {
-        console.log(" - Valid MAC Address was found in Config, detecting signal strength.");
-        var stdout = execSync(cmd());
-        console.log("Stdout: "+stdout);
-        var connectionStrength = parseConnectionStrength(stdout);
-        console.log(connectionStrength);
-        console.log(inRange);
-        console.log(VICINITY_STRENGTH);
-        // Check if phone is in valid range
-        if ((inRange == false) && (connectionStrength > VICINITY_STRENGTH)) {
-            console.log(" - Phone is in the disconnected state and device is within preconfigured vicinity.");
-            console.log("    - Unlocking Car");
-            switchPower(unlockPin);
-            console.log("    - Reconfiguring Variables");
-            inRange = true;
-            lastConnectionTime = Date.now();
-            disconnectionCount = 0;
-            console.log("       - Connection Time: " + lastConnectionTime);   
-        }
-        // If the signal is weaker than that, treat it as though the phone is not in valid range
-        else if ((inRange == true) && (connectionStrength < VICINITY_STRENGTH)) {
-            console.log(" - Phone is in the connected state and device is not within preconfigured vicinity.");
-            disconnectionCount++;
-            console.log("    - Increment Disconnection Count: " + disconnectionCount);
-            // Calculate approx. how many times hardware should be probed before disconnect is acknowledged
-            if (disconnectionCount >= Math.ceil(DISCONNECTION_DURATION / POLLING_INTERVAL)) {
-                console.log("    - Locking Car");
-                switchPower(lockPin);
-                inRange = false;
+        console.log("Probing for Connection...");
+        console.log(" - " + Date.now());
+        if (mac.length == 17) {
+            console.log(" - Valid MAC Address was found in Config, detecting signal strength.");
+            var stdout = execSync(cmd());
+            console.log("Stdout: "+stdout);
+            var connectionStrength = parseConnectionStrength(stdout);
+            console.log(connectionStrength);
+            console.log(inRange);
+            console.log(VICINITY_STRENGTH);
+            // Check if phone is in valid range
+            if ((inRange == false) && (connectionStrength > VICINITY_STRENGTH)) {
+                console.log(" - Phone is in the disconnected state and device is within preconfigured vicinity.");
+                console.log("    - Unlocking Car");
+                switchPower(unlockPin);
+                console.log("    - Reconfiguring Variables");
+                inRange = true;
+                lastConnectionTime = Date.now();
+                disconnectionCount = 0;
+                console.log("       - Connection Time: " + lastConnectionTime);   
+            }
+            // If the signal is weaker than that, treat it as though the phone is not in valid range
+            else if ((inRange == true) && (connectionStrength < VICINITY_STRENGTH)) {
+                console.log(" - Phone is in the connected state and device is not within preconfigured vicinity.");
+                disconnectionCount++;
+                console.log("    - Increment Disconnection Count: " + disconnectionCount);
+                // Calculate approx. how many times hardware should be probed before disconnect is acknowledged
+                if (disconnectionCount >= Math.ceil(DISCONNECTION_DURATION / POLLING_INTERVAL)) {
+                    console.log("    - Locking Car");
+                    switchPower(lockPin);
+                    inRange = false;
+                }
             }
         }
     }
