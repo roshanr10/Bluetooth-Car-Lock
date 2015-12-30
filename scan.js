@@ -69,8 +69,10 @@ setInterval(function() {
     console.log("Probing for Connection...");
     console.log(" - " + Date.now());
     if (mac.length == 17) {
-        console.log(" - Valid MAC Address was found, detecting signal strength.");
+        console.log(" - Valid MAC Address was found in Config, detecting signal strength.");
         exec(cmd(), function(error, stdout, stderr) {
+            //console.log(stdout);
+            
             var connectionStrength = parseConnectionStrength(stdout);
 
             // Check if phone is in valid range
