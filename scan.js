@@ -72,7 +72,8 @@ setInterval(function() {
         console.log(" - Valid MAC Address was found in Config, detecting signal strength.");
         try {
             var stdout = execSync(cmd(),{
-                encoding: 'utf8'
+                encoding: 'utf8',
+                stdio: 'ignore'
             });
             var connectionStrength = parseConnectionStrength(stdout);
         } catch(e){
