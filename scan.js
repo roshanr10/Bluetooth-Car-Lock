@@ -24,22 +24,21 @@ changeButton.on('change', function(value) {
     console.log("btn: "+value);
     if (value == 1) {
         console.log("Request to Change Bluetooth Device Received.");
-        exec("hcitool scan", function(error, stdout, stderr) {
-            console.log(" - Scanning...");
-            var mac_addr_line = stdout.split("\n")
-            
-            if(mac_addr_line[1] != ""){
-                var temp_mac = mac_addr_line[1].split("\t")[1];
-
-                if(temp_mac.length = 17){
-                    console.log("   - Device found: " + mac);
-                    mac = temp_mac;
-                    fs.writeFileSync(CONF_FILE, mac);
-                } else {
-                    console.log("   - No Device was Found.");
-                }
-            }
+        var stdout  = execSync("hcitool scan", {
+            encoding: 'utf8',
+            stdio: [ 'ignore', 'pipe', 'ignore' ]
         });
+
+        console.log(" - Scanning...");
+        var mac_addr_line = stdout.split("\n")
+
+        if(mac_addr_line[1].split("\t")[1] != "" && mac_addr_line[1].split("\t")[1] == 17){
+            console.log("   - Device found: " + mac);
+            mac = temp_mac;
+            fs.writeFileSync(CONF_FILE, mac); 
+        } else {
+            console.log("   - No Device was Found.");
+        }
     }
 });
 
@@ -72,7 +71,7 @@ setInterval(function() {
     if (mac.length == 17) {
         console.log(" - Valid MAC Address was found in Config, detecting signal strength.");
         try {
-            var stdout = execSync(cmd(),{
+            var stdout = execSync(cmd(), {
                 encoding: 'utf8',
                 stdio: [ 'ignore', 'pipe', 'ignore' ]
             });
