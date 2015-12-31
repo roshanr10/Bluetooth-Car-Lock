@@ -32,7 +32,7 @@ changeButton.on('change', function(value) {
         var mac_addr_line = stdout.split("\n")
 
         var temp_mac = mac_addr_line[1].split("\t")[1]
-        if(temp_mac.length == 17){
+        if(temp_mac && temp_mac.length == 17){
             console.log("   - Device found: " + mac);
             mac = temp_mac;
             fs.writeFileSync(CONF_FILE, mac); 
