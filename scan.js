@@ -90,6 +90,7 @@ setInterval(function() {
             disconnectionCount = 0;
             console.log("       - Connection Time: " + lastConnectionTime);   
         } else if (connectionStrength > VICINITY_STRENGTH) {
+            console.log(" - Phone is in the connected state and device is within preconfigured vicinity.");
             disconnectionCount = 0;
         }
         // If the signal is weaker than that, treat it as though the phone is not in valid range
@@ -103,6 +104,10 @@ setInterval(function() {
                 switchPower(lockPin);
                 inRange = false;
             }
+        }
+        
+        else {
+            console.log(" - Phone is in the same state.");
         }
     }
     console.log("--------------");
