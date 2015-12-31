@@ -39,6 +39,7 @@ changeButton.on('change', function(value) {
         } else {
             console.log("   - No Device was Found.");
         }
+        console.log("--------------");
     }
 });
 
