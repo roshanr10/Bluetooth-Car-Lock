@@ -73,7 +73,7 @@ setInterval(function() {
         try {
             var stdout = execSync(cmd(),{
                 encoding: 'utf8',
-                stdio: 'ignore'
+                stdio: [ 'ignore', 'pipe', 'ignore' ]
             });
             var connectionStrength = parseConnectionStrength(stdout);
         } catch(e){
