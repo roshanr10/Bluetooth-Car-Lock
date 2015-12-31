@@ -20,7 +20,8 @@ var inRange = false,
 
 var disconnectionCount = 0;
 
-/*changeButton.on('change', function(value) {
+changeButton.on('change', function(value) {
+    console.log("btn: "+value);
     if (value == 1) {
         console.log("Request to Change Bluetooth Device Received.");
         exec("hcitool scan", function(error, stdout, stderr) {
@@ -40,7 +41,7 @@ var disconnectionCount = 0;
             }
         });
     }
-});*/
+});
 
 function switchPower(pin) {
     pin.high();
