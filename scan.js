@@ -54,7 +54,7 @@ function cmd() {
 }
 
 function parseConnectionStrength(resp) {
-    var rawRSSI = resp.split(": ")[1];
+    var rawRSSI = resp.split(": ")[1].split("\n")[0];
     console.log("    - raw RSSI: " + rawRSSI);
     
     if (rawRSSI != "") {
