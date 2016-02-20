@@ -10,10 +10,14 @@ var execSync = require('child_process').execSync,
 
 var mac = fs.readFileSync(CONF_FILE);
 
-var unlockPin = new GPIO(0, 'out'),
-    lockPin = new GPIO(7, 'out');
+var unlockPin = new GPIO(7, 'out'),
+    lockPin = new GPIO(0, 'out');
 
-var changeButton = new GPIO(8, 'in');
+var probingLED = new GPIO(4, 'out'),
+    unlockedLED= new GPIO(5, 'out'),
+    newDeviceLED = new GPIO(6, 'out');
+
+var changeButton = new GPIO(2, 'in');
 
 var inRange = false,
     lastConnectionTime = 0;
@@ -21,7 +25,7 @@ var inRange = false,
 var disconnectionCount = 0;
 
 changeButton.on('change', function(value) {
-    if (value == 0) {
+    if (value == 1) {
         console.log("Request to Change Bluetooth Device Received.");
         var stdout  = execSync("hcitool scan", {
             encoding: 'utf8',
@@ -34,6 +38,7 @@ changeButton.on('change', function(value) {
         var temp_mac = mac_addr_line[1].split("\t")[1]
         if(temp_mac && temp_mac.length == 17){
             console.log("   - Device found: " + mac);
+            flashLED(newDeviceLED);
             mac = temp_mac;
             fs.writeFileSync(CONF_FILE, mac); 
         } else {
@@ -44,6 +49,13 @@ changeButton.on('change', function(value) {
 });
 
 function switchPower(pin) {
+    pin.low();
+    setTimeout(function() {
+        pin.high();
+    }, BUTTON_HOLD_TIME);
+}
+
+function flashLED(pin) {
     pin.high();
     setTimeout(function() {
         pin.low();
@@ -65,6 +77,11 @@ function parseConnectionStrength(resp) {
     }
 }
 
+unlockPin.high();
+lockPin.high();
+
+probingLED.high();
+
 // Probe for Device Presence
 setInterval(function() {
     console.log("Probing for Connection...");
@@ -85,6 +102,7 @@ setInterval(function() {
             console.log(" - Phone is in the disconnected state and device is within preconfigured vicinity.");
             console.log("    - Unlocking Car");
             switchPower(unlockPin);
+            unlockedLED.high();
             console.log("    - Reconfiguring Variables");
             inRange = true;
             lastConnectionTime = Date.now();
@@ -103,6 +121,7 @@ setInterval(function() {
             if (disconnectionCount >= Math.ceil(DISCONNECTION_DURATION / POLLING_INTERVAL)) {
                 console.log("    - Locking Car");
                 switchPower(lockPin);
+                unlockedLED.low();
                 inRange = false;
             }
         }
